@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Для тебя ❤️</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html, body {
+      width: 100%;
+      height: 100%;
+      font-family: "Inter", "Segoe UI", sans-serif;
+      overflow: hidden;
+      color: white;
+    }
+
+    body {
+      position: relative;
+      background: #000;
+    }
+
+    .background {
+      position: fixed;
+      inset: 0;
+      background-image: url('./your-photo.jpg');
+      background-size: cover;
+      background-position: center;
+      transform: scale(1.03);
+    }
+
+    .overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.5);
+      backdrop-filter: blur(1px);
+    }
+
+    .container {
+      position: relative;
+      z-index: 2;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+    }
+
+    .card {
+      width: min(760px, 100%);
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.16);
+      border-radius: 28px;
+      padding: 32px 24px;
+      text-align: center;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.35);
+      backdrop-filter: blur(2px);
+    }
+
+    .eyebrow {
+      font-size: 14px;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      opacity: 0.8;
+      margin-bottom: 14px;
+    }
+
+    h1 {
+      font-size: clamp(28px, 4vw, 46px);
+      line-height: 1.15;
+      font-weight: 700;
+      margin-bottom: 18px;
+    }
+
+    .subtitle {
+      font-size: clamp(16px, 2vw, 20px);
+      opacity: 0.92;
+      margin-bottom: 28px;
+    }
+
+    .counter-label {
+      font-size: 16px;
+      opacity: 0.85;
+      margin-bottom: 12px;
+    }
+
+    .counter {
+      font-size: clamp(28px, 5vw, 56px);
+      font-weight: 800;
+      line-height: 1.15;
+      margin-bottom: 18px;
+    }
+
+    .days {
+      font-size: clamp(18px, 2.4vw, 28px);
+      opacity: 0.98;
+      margin-bottom: 28px;
+    }
+
+    .date-note {
+      font-size: 14px;
+      opacity: 0.7;
+      margin-bottom: 28px;
+    }
+
+    .music-btn {
+      border: none;
+      border-radius: 999px;
+      padding: 14px 22px;
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      background: rgba(255, 255, 255, 0.95);
+      color: #111;
+      transition: transform 0.2s ease, opacity 0.2s ease;
+    }
+
+    .music-btn:hover {
+      transform: translateY(-1px);
+      opacity: 0.95;
+    }
+
+    .music-btn:active {
+      transform: translateY(0);
+    }
+
+    @media (max-width: 520px) {
+      .card {
+        padding: 26px 18px;
+        border-radius: 22px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="background"></div>
+  <div class="overlay"></div>
+
+  <main class="container">
+    <section class="card">
+      <div class="eyebrow">24.09.2024 ❤️</div>
+      <h1>Каждый день с тобой — мой любимый день</h1>
+      <p class="subtitle">И с каждым днём я люблю тебя ещё сильнее</p>
+
+      <div class="counter-label">Мы вместе уже:</div>
+      <div id="relationshipCounter" class="counter">—</div>
+
+      <div id="daysCounter" class="days">Спасибо тебе за эти — дней</div>
+
+      <button id="musicButton" class="music-btn">Включить нашу песню</button>
+      <audio id="ourSong" loop>
+        <source src="./our-song.mp3" type="audio/mpeg" />
+      </audio>
+    </section>
+  </main>
+
+  <script>
+    const startDate = new Date(2024, 8, 24); // 24 September 2024 (month is 0-based)
+
+    const relationshipCounter = document.getElementById('relationshipCounter');
+    const daysCounter = document.getElementById('daysCounter');
+    const musicButton = document.getElementById('musicButton');
+    const ourSong = document.getElementById('ourSong');
+
+    function pluralize(number, one, few, many) {
+      const n = Math.abs(number) % 100;
+      const n1 = n % 10;
+      if (n > 10 && n < 20) return many;
+      if (n1 > 1 && n1 < 5) return few;
+      if (n1 === 1) return one;
+      return many;
+    }
+
+    function startOfDay(date) {
+      return new Date(date.getFullYear(), date.getMonth(), date.getDate());
+    }
+
+    function calculateDuration(from, to) {
+      let years = to.getFullYear() - from.getFullYear();
+      let months = to.getMonth() - from.getMonth();
+      let days = to.getDate() - from.getDate();
+
+      if (days < 0) {
+        months--;
+        const prevMonthLastDay = new Date(to.getFullYear(), to.getMonth(), 0).getDate();
+        days += prevMonthLastDay;
+      }
+
+      if (months < 0) {
+        years--;
+        months += 12;
+      }
+
+      return { years, months, days };
+    }
+
+    function calculateTotalDays(from, to) {
+      const diffMs = startOfDay(to) - startOfDay(from);
+      return Math.floor(diffMs / (1000 * 60 * 60 * 24));
+    }
+
+    function formatDuration({ years, months, days }) {
+      const parts = [];
+
+      if (years > 0) {
+        parts.push(`${years} ${pluralize(years, 'год', 'года', 'лет')}`);
+      }
+
+      if (months > 0 || years > 0) {
+        parts.push(`${months} ${pluralize(months, 'месяц', 'месяца', 'месяцев')}`);
+      }
+
+      parts.push(`${days} ${pluralize(days, 'день', 'дня', 'дней')}`);
+
+      return parts.join(' ');
+    }
+
+    function updateCounter() {
+      const now = new Date();
+      const duration = calculateDuration(startDate, now);
+      const totalDays = calculateTotalDays(startDate, now);
+
+      relationshipCounter.textContent = formatDuration(duration);
+      daysCounter.textContent = `Спасибо тебе за эти ${totalDays} ${pluralize(totalDays, 'день', 'дня', 'дней')}`;
+    }
+
+    let isPlaying = false;
+
+    musicButton.addEventListener('click', async () => {
+      try {
+        if (!isPlaying) {
+          await ourSong.play();
+          musicButton.textContent = 'Выключить нашу песню';
+          isPlaying = true;
+        } else {
+          ourSong.pause();
+          musicButton.textContent = 'Включить нашу песню';
+          isPlaying = false;
+        }
+      } catch (error) {
+        console.error('Ошибка воспроизведения:', error);
+      }
+    });
+
+    updateCounter();
+
+    const now = new Date();
+    const nextMidnight = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1, 0, 0, 1);
+    const timeUntilMidnight = nextMidnight - now;
+
+    setTimeout(() => {
+      updateCounter();
+      setInterval(updateCounter, 24 * 60 * 60 * 1000);
+    }, timeUntilMidnight);
+  </script>
+</body>
+</html>
